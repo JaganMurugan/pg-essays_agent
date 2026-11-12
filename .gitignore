@@ -1,0 +1,30 @@
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Checkpoints
+pg_ingest_checkpoint_*.json
+*.tmp
+
+# Downloaded data and models
+data/
+pg_essays/
+.cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Testing
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
