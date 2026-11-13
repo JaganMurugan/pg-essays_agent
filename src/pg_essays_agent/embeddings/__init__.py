@@ -1,0 +1,1 @@
+"""Embedding providers and their common interface."""
