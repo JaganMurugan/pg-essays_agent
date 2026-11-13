@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pg_essays_agent.exceptions import ConfigurationError
 
-DEFAULT_DATASET = "sgoe19/paul_graham_essays"
+DEFAULT_DATASET = "sgoel9/paul_graham_essays"
 
 @dataclass(frozen=True, slots=True)
 class Settings:
@@ -65,7 +65,7 @@ class Settings:
 
         if self.overlap_tokens >= self.chunk_tokens:
             raise ConfigurationError(
-                "PG_OVERLAP_TOKENS must be smaller thank PG_CHUNK_TOKENS."
+                "PG_OVERLAP_TOKENS must be smaller than PG_CHUNK_TOKENS."
             )
 
         if self.batch_size <= 0:
@@ -76,7 +76,7 @@ class Settings:
 
         if self.embedding_dimension <= 0:
             raise ConfigurationError(
-                "Embeddign dimension must be positive"
+                "Embedding dimension must be positive"
             )
 
         if not self.pinecone_index.strip():
@@ -93,7 +93,7 @@ def _load_dotenv() -> None:
     """
     Load .env variables if python-dotenv is installed.
 
-    Environment variables already defiend by the operating
+    Environment variables already defined by the operating
     system take precedence over values in the .env file.
     """
 
@@ -109,7 +109,7 @@ def _load_dotenv() -> None:
         pass
 
 def _get_int(name: str, default: int) -> int:
-    """Read and parase a positive integer environment variable"""
+    """Read and parse a positive integer environment variable"""
 
     raw = os.getenv(name)
 
@@ -120,7 +120,7 @@ def _get_int(name: str, default: int) -> int:
 
     except ValueError as exc:
         raise ConfigurationError(
-            f"{name} musst be an integer. Received {raw!r}"
+            f"{name} must be an integer. Received {raw!r}"
         )
 
 def load_settings() -> Settings:
