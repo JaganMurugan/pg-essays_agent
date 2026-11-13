@@ -17,6 +17,7 @@ class Settings:
 
     # Data Source
     hf_dataset: str = DEFAULT_DATASET
+    markdown_dir: Path | None = None
 
     # Embedding configuration
     embedding_provider: str = "local"
@@ -159,6 +160,12 @@ def load_settings() -> Settings:
     return Settings(
         hf_dataset=os.getenv(
             "HF_DATASET", DEFAULT_DATASET
+        ),
+
+        markdown_dir=(
+            Path(md_dir).expanduser()
+            if (md_dir := os.getenv("PG_MD_DIR", "").strip())
+            else None
         ),
 
         embedding_provider=provider,
