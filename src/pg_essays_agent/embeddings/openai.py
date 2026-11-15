@@ -4,6 +4,8 @@ from openai import OpenAI
 from pg_essays_agent.config import Settings
 from pg_essays_agent.exceptions import EmbeddingError
 
+from pg_essays_agent.utils.retry import with_retries
+
 
 class OpenAIEmbeddingProvider:
     """Generates embeddings using the OpenAI embeddings API."""
@@ -29,11 +31,13 @@ class OpenAIEmbeddingProvider:
             return []
 
         try:
-            response = self.client.embeddings.create(
-                model=self.settings.embedding_model,
-                input=texts,
+            response = with_retries(
+                lambda: self.client.embeddings.create(
+                    model=self.settings.embedding_model,
+                    input=texts,
+                ),
+                what="OpenAI embedding request",
             )
-
             vectors = [
                 item.embedding
                 for item in response.data

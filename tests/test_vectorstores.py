@@ -160,3 +160,31 @@ def test_index_dimension_mismatch_raises_error(monkeypatch):
 
     with pytest.raises(VectorStoreError, match="dimension"):
         PineconeVectorStore(settings)
+
+def test_upsert_retries_transient_failure(monkeypatch):
+    from pg_essays_agent.vectorstores import pinecone as pinecone_module
+
+    fake_index = Mock()
+    fake_index.upsert.side_effect = [
+        ConnectionError("temporary failure"),
+        None,
+    ]
+
+    store = PineconeVectorStore.__new__(PineconeVectorStore)
+    store.settings = make_settings()
+    store.index = fake_index
+
+    monkeypatch.setattr(
+        "pg_essays_agent.utils.retry.time.sleep",
+        lambda _: None,
+    )
+
+    store.upsert([
+        {
+            "id": "essay-0",
+            "values": [0.1, 0.2, 0.3],
+            "metadata": {"title": "Test"},
+        }
+    ])
+
+    assert fake_index.upsert.call_count == 2

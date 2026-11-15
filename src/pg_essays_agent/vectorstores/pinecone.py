@@ -7,6 +7,8 @@ from pinecone import Pinecone, ServerlessSpec
 from pg_essays_agent.config import Settings
 from pg_essays_agent.exceptions import VectorStoreError
 
+from pg_essays_agent.utils.retry import with_retries
+
 logger = logging.getLogger(__name__)
 
 
@@ -71,10 +73,14 @@ class PineconeVectorStore:
             return
 
         try:
-            self.index.upsert(
+            with_retries(
+            lambda: self.index.upsert(
                 vectors=vectors,
                 namespace=self.settings.pinecone_namespace,
-            )
+            ),
+            what="Pinecone upsert",
+        )
+            
         except Exception as exc:
             raise VectorStoreError(
                 f"Pinecone upsert failed: {exc}"
@@ -82,11 +88,14 @@ class PineconeVectorStore:
 
     def query(self, vector: list[float], top_k: int = 5) -> list[dict]:
         try:
-            response = self.index.query(
-                vector=vector,
-                top_k=top_k,
-                include_metadata=True,
-                namespace=self.settings.pinecone_namespace,
+            response = with_retries(
+                lambda: self.index.query(
+                    vector=vector,
+                    top_k=top_k,
+                    include_metadata=True,
+                    namespace=self.settings.pinecone_namespace,
+                ),
+                what="Pinecone query",
             )
 
             return [
@@ -104,7 +113,11 @@ class PineconeVectorStore:
 
     def count(self) -> int:
         try:
-            stats = self.index.describe_index_stats()
+            stats = with_retries(
+                lambda: self.index.describe_index_stats(),
+                what="Pinecone index statistics",
+            )
+
             namespace_stats = stats.namespaces.get(
                 self.settings.pinecone_namespace
             )
