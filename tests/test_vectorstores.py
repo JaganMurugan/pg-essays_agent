@@ -51,10 +51,19 @@ def test_query_returns_score_and_metadata():
     store.settings = make_settings()
     store.index = fake_index
 
+    fake_match.id = "test-chunk-001"
+
     results = store.query([0.1, 0.2, 0.3], top_k=5)
 
     assert results == [
-        {"score": 0.95, "title": "Test essay", "text": "Example"}
+        {
+            "id": "test-chunk-001",
+            "score": 0.95,
+            "metadata": {
+                "title": "Test essay",
+                "text": "Example",
+            },
+        }
     ]
 
     fake_index.query.assert_called_once_with(
@@ -190,31 +199,31 @@ def test_upsert_retries_transient_failure(monkeypatch):
     assert fake_index.upsert.call_count == 2
 
     def test_query_preserves_id_score_and_metadata(vector_store):
-    vector_store.index.query.return_value = Mock(
-        matches=[
-            Mock(
-                id="essay-1-0",
-                score=0.95,
-                metadata={
+        vector_store.index.query.return_value = Mock(
+            matches=[
+                Mock(
+                    id="essay-1-0",
+                    score=0.95,
+                    metadata={
+                        "title": "Startup Ideas",
+                        "text": "Build something people want.",
+                    },
+                )
+            ]
+        )
+
+        results = vector_store.query(
+            vector=[0.1, 0.2, 0.3],
+            top_k=5,
+        )
+
+        assert results == [
+            {
+                "id": "essay-1-0",
+                "score": 0.95,
+                "metadata": {
                     "title": "Startup Ideas",
                     "text": "Build something people want.",
                 },
-            )
+            }
         ]
-    )
-
-    results = vector_store.query(
-        vector=[0.1, 0.2, 0.3],
-        top_k=5,
-    )
-
-    assert results == [
-        {
-            "id": "essay-1-0",
-            "score": 0.95,
-            "metadata": {
-                "title": "Startup Ideas",
-                "text": "Build something people want.",
-            },
-        }
-    ]

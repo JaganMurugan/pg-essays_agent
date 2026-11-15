@@ -7,6 +7,10 @@ from pg_essays_agent.application import (
     create_retrieval_pipeline,
 )
 
+from pathlib import Path
+
+from pg_essays_agent.evaluation.candidates import collect_candidates
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,6 +53,35 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=5,
         help="Number of results to retrieve (default: 5)",
+    )
+
+    
+
+    # Candidate collection command
+    candidate_parser = subparsers.add_parser(
+        "collect-candidates",
+        help="Retrieve candidate chunks for evaluation queries",
+    )
+
+    candidate_parser.add_argument(
+        "--input",
+        type=Path,
+        default=Path("data/evaluation/benchmark.jsonl"),
+        help="Benchmark JSONL file",
+    )
+
+    candidate_parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path("data/evaluation/candidates.jsonl"),
+        help="Candidate output JSONL file",
+    )
+
+    candidate_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=20,
+        help="Number of candidate chunks per query",
     )
 
     return parser
@@ -97,6 +130,23 @@ def main() -> None:
             print(f"   Chunk: {chunk_index}")
             print(f"   {text}")
             print("-" * 80)
+
+    elif args.command == "collect-candidates":
+        if args.top_k <= 0:
+            parser.error("--top-k must be greater than zero")
+
+        pipeline = create_retrieval_pipeline()
+
+        count = collect_candidates(
+            retriever=pipeline,
+            input_path=args.input,
+            output_path=args.output,
+            top_k=args.top_k,
+        )
+
+        print("\nCandidate collection completed.")
+        print(f"Queries processed: {count}")
+        print(f"Output file: {args.output}")
 
 
 if __name__ == "__main__":
