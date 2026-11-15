@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from pg-essays-agent!")
+from pg_essays_agent.cli import main
+
+__all__ = ["main"]
