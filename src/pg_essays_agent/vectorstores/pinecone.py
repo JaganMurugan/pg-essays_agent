@@ -86,6 +86,7 @@ class PineconeVectorStore:
                 f"Pinecone upsert failed: {exc}"
             ) from exc
 
+    
     def query(self, vector: list[float], top_k: int = 5) -> list[dict]:
         try:
             response = with_retries(
@@ -100,8 +101,9 @@ class PineconeVectorStore:
 
             return [
                 {
-                    "score": match.score,
-                    **(match.metadata or {}),
+                    "id": match.id,
+                    "score": float(match.score),
+                    "metadata": match.metadata or {},
                 }
                 for match in response.matches
             ]
@@ -110,6 +112,7 @@ class PineconeVectorStore:
             raise VectorStoreError(
                 f"Pinecone query failed: {exc}"
             ) from exc
+
 
     def count(self) -> int:
         try:

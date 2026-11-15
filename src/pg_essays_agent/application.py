@@ -9,6 +9,7 @@ from pg_essays_agent.loaders.huggingface import HuggingFaceLoader
 from pg_essays_agent.pipeline.ingestion import IngestionPipeline
 from pg_essays_agent.vectorstores.factory import create_vector_store
 
+from pg_essays_agent.retrieval.pipeline import RetrievalPipeline
 
 def configure_logging(settings: Settings) -> None:
     logging.basicConfig(
@@ -40,4 +41,22 @@ def create_ingestion_pipeline(
         vector_store=vector_store,
         checkpoint=checkpoint,
         settings=settings,
+    )
+
+def create_retrieval_pipeline(
+    settings: Settings | None = None,
+) -> RetrievalPipeline:
+    """Construct the retrieval pipeline and its dependencies."""
+
+    if settings is None:
+        settings = load_settings()
+
+    configure_logging(settings)
+
+    embedder = create_embedding_provider(settings)
+    vector_store = create_vector_store(settings)
+
+    return RetrievalPipeline(
+        embedder=embedder,
+        vector_store=vector_store,
     )

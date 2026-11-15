@@ -2,8 +2,10 @@
 import argparse
 import logging
 
-from pg_essays_agent.application import create_ingestion_pipeline
-
+from pg_essays_agent.application import (
+    create_ingestion_pipeline,
+    create_retrieval_pipeline,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +13,7 @@ logger = logging.getLogger(__name__)
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pg-essays-agent",
-        description="Paul Graham Essays RAG ingestion application",
+        description="Paul Graham Essays RAG application",
     )
 
     subparsers = parser.add_subparsers(
@@ -19,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
         required=True,
     )
 
+    # Ingestion command
     ingest_parser = subparsers.add_parser(
         "ingest",
         help="Ingest essays into the vector database",
@@ -27,7 +30,25 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_parser.add_argument(
         "--fresh",
         action="store_true",
-        help="Clear the ingestion checkpoint and ingest everything again",
+        help="Clear the checkpoint and ingest everything again",
+    )
+
+    # Retrieval command
+    query_parser = subparsers.add_parser(
+        "query",
+        help="Search for relevant essay chunks",
+    )
+
+    query_parser.add_argument(
+        "query",
+        help="Natural-language search query",
+    )
+
+    query_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Number of results to retrieve (default: 5)",
     )
 
     return parser
@@ -45,6 +66,37 @@ def main() -> None:
         print(f"Total chunks: {result.total_chunks}")
         print(f"Previously completed: {result.previously_completed}")
         print(f"Newly processed: {result.newly_processed}")
+
+    elif args.command == "query":
+        if args.top_k <= 0:
+            parser.error("--top-k must be greater than zero")
+
+        pipeline = create_retrieval_pipeline()
+        results = pipeline.run(
+            query=args.query,
+            top_k=args.top_k,
+        )
+
+        if not results:
+            print("No matching essay chunks found.")
+            return
+
+        print(f"\nTop {len(results)} results:\n")
+
+        for rank, result in enumerate(results, start=1):
+            metadata = result.metadata
+
+            title = metadata.get("title", "Untitled")
+            text = metadata.get("text", "")
+            essay_id = metadata.get("essay_id", "Unknown")
+            chunk_index = metadata.get("chunk_index", "Unknown")
+
+            print(f"{rank}. {title}")
+            print(f"   Score: {result.score:.4f}")
+            print(f"   Essay ID: {essay_id}")
+            print(f"   Chunk: {chunk_index}")
+            print(f"   {text}")
+            print("-" * 80)
 
 
 if __name__ == "__main__":

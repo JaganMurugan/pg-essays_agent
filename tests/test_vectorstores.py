@@ -188,3 +188,33 @@ def test_upsert_retries_transient_failure(monkeypatch):
     ])
 
     assert fake_index.upsert.call_count == 2
+
+    def test_query_preserves_id_score_and_metadata(vector_store):
+    vector_store.index.query.return_value = Mock(
+        matches=[
+            Mock(
+                id="essay-1-0",
+                score=0.95,
+                metadata={
+                    "title": "Startup Ideas",
+                    "text": "Build something people want.",
+                },
+            )
+        ]
+    )
+
+    results = vector_store.query(
+        vector=[0.1, 0.2, 0.3],
+        top_k=5,
+    )
+
+    assert results == [
+        {
+            "id": "essay-1-0",
+            "score": 0.95,
+            "metadata": {
+                "title": "Startup Ideas",
+                "text": "Build something people want.",
+            },
+        }
+    ]
