@@ -6,6 +6,7 @@ import pytest
 from pg_essays_agent.config import Settings
 from pg_essays_agent.exceptions import VectorStoreError
 from pg_essays_agent.vectorstores.pinecone import PineconeVectorStore
+from pg_essays_agent.vectorstores import pinecone as pinecone_module
 
 
 def make_settings():
@@ -87,3 +88,75 @@ def test_upsert_wraps_errors():
 
     with pytest.raises(VectorStoreError, match="upsert failed"):
         store.upsert([{"id": "test", "values": [0.1, 0.2, 0.3]}])
+
+def test_existing_index_is_reused(monkeypatch):
+    settings = make_settings()
+
+    fake_client = Mock()
+    fake_client.list_indexes.return_value.names.return_value = [
+        "test-index"
+    ]
+
+    description = Mock()
+    description.status = {"ready": True}
+    description.dimension = 3
+
+    fake_client.describe_index.return_value = description
+
+    monkeypatch.setattr(
+        pinecone_module,
+        "Pinecone",
+        lambda **kwargs: fake_client,
+    )
+
+    store = PineconeVectorStore(settings)
+
+    fake_client.create_index.assert_not_called()
+    fake_client.Index.assert_called_once_with("test-index")
+
+
+def test_missing_index_is_created(monkeypatch):
+    settings = make_settings()
+
+    fake_client = Mock()
+    fake_client.list_indexes.return_value.names.return_value = []
+
+    description = Mock()
+    description.status = {"ready": True}
+    description.dimension = 3
+
+    fake_client.describe_index.return_value = description
+
+    monkeypatch.setattr(
+        pinecone_module,
+        "Pinecone",
+        lambda **kwargs: fake_client,
+    )
+
+    PineconeVectorStore(settings)
+
+    fake_client.create_index.assert_called_once()
+
+
+def test_index_dimension_mismatch_raises_error(monkeypatch):
+    settings = make_settings()
+
+    fake_client = Mock()
+    fake_client.list_indexes.return_value.names.return_value = [
+        "test-index"
+    ]
+
+    description = Mock()
+    description.status = {"ready": True}
+    description.dimension = 1024
+
+    fake_client.describe_index.return_value = description
+
+    monkeypatch.setattr(
+        pinecone_module,
+        "Pinecone",
+        lambda **kwargs: fake_client,
+    )
+
+    with pytest.raises(VectorStoreError, match="dimension"):
+        PineconeVectorStore(settings)
