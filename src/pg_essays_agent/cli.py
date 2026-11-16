@@ -11,6 +11,12 @@ from pathlib import Path
 
 from pg_essays_agent.evaluation.candidates import collect_candidates
 
+from pg_essays_agent.application import (
+    create_ingestion_pipeline,
+    create_retrieval_pipeline,
+    create_rag_pipeline,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -55,7 +61,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Number of results to retrieve (default: 5)",
     )
 
-    
+    # Answer generation command
+    ask_parser = subparsers.add_parser(
+        "ask",
+        help="Ask a question and generate an answer from Paul Graham essays",
+    )
+
+    ask_parser.add_argument(
+        "query",
+        help="Natural-language question",
+    )
+
+    ask_parser.add_argument(
+        "--top-k",
+        type=int,
+        default=5,
+        help="Number of essay chunks to retrieve (default: 5)",
+    )
 
     # Candidate collection command
     candidate_parser = subparsers.add_parser(
@@ -130,6 +152,33 @@ def main() -> None:
             print(f"   Chunk: {chunk_index}")
             print(f"   {text}")
             print("-" * 80)
+
+    elif args.command == "ask":
+        if args.top_k <= 0:
+            parser.error("--top-k must be greater than zero")
+
+        pipeline = create_rag_pipeline()
+
+        result = pipeline.run(
+            query=args.query,
+            top_k=args.top_k,
+        )
+
+        print("\nAnswer:\n")
+        print(result.answer)
+
+        if result.sources:
+            print("\nSources:\n")
+
+            for index, source in enumerate(result.sources, start=1):
+                print(f"[S{index}] {source.title}")
+                print(f"     Essay ID: {source.essay_id}")
+                print(f"     Chunk: {source.chunk_index}")
+                print(f"     Chunk ID: {source.chunk_id}")
+                print(f"     Retrieval score: {source.retrieval_score:.4f}")
+                print()
+
+        print(f"Generation model: {result.model}")
 
     elif args.command == "collect-candidates":
         if args.top_k <= 0:

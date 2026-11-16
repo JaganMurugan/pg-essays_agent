@@ -4,6 +4,7 @@ from pathlib import Path
 
 from pg_essays_agent.exceptions import ConfigurationError
 
+
 DEFAULT_DATASET = "sgoel9/paul_graham_essays"
 
 @dataclass(frozen=True, slots=True)
@@ -44,6 +45,12 @@ class Settings:
     # Credentials: excluded from repr to avoid accidental exposure
     pinecone_api_key: str | None = field(default=None, repr=False)
     openai_api_key: str | None = field(default=None, repr=False)
+
+    # Gemini generation configuration
+    gemini_model: str = "gemini-3.8-flash"
+
+    # Credentials
+    gemini_api_key: str | None = field(default=None, repr=False)
 
     def __post_init__(self) -> None:
         """Validate configuration after initialization"""
@@ -88,6 +95,11 @@ class Settings:
         if not self.pinecone_namespace.strip():
             raise ConfigurationError(
                 "Pinecone namespace cannot be empty"
+            )
+
+        if not self.gemini_model.strip():
+            raise ConfigurationError(
+                "GEMINI_MODEL cannot be empty."
             )
 
 def _load_dotenv() -> None:
@@ -211,6 +223,12 @@ def load_settings() -> Settings:
         openai_api_key=os.getenv(
             "OPENAI_API_KEY"
         ),
+        gemini_model=os.getenv(
+            "GEMINI_MODEL",
+            "gemini-3.8-flash",
+        ),
+
+gemini_api_key=os.getenv("GEMINI_API_KEY"),
     )
 
 

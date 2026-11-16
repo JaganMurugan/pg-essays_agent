@@ -198,32 +198,43 @@ def test_upsert_retries_transient_failure(monkeypatch):
 
     assert fake_index.upsert.call_count == 2
 
-    def test_query_preserves_id_score_and_metadata(vector_store):
-        vector_store.index.query.return_value = Mock(
-            matches=[
-                Mock(
-                    id="essay-1-0",
-                    score=0.95,
-                    metadata={
-                        "title": "Startup Ideas",
-                        "text": "Build something people want.",
-                    },
-                )
-            ]
-        )
+def test_query_preserves_id_score_and_metadata():
+    fake_index = Mock()
 
-        results = vector_store.query(
-            vector=[0.1, 0.2, 0.3],
-            top_k=5,
+    fake_index.query.return_value.matches = [
+        Mock(
+            id="essay-1-0",
+            score=0.95,
+            metadata={
+                "title": "Startup Ideas",
+                "text": "Build something people want.",
+            },
         )
+    ]
 
-        assert results == [
-            {
-                "id": "essay-1-0",
-                "score": 0.95,
-                "metadata": {
-                    "title": "Startup Ideas",
-                    "text": "Build something people want.",
-                },
-            }
-        ]
+    store = PineconeVectorStore.__new__(PineconeVectorStore)
+    store.settings = make_settings()
+    store.index = fake_index
+
+    results = store.query(
+        vector=[0.1, 0.2, 0.3],
+        top_k=5,
+    )
+
+    assert results == [
+        {
+            "id": "essay-1-0",
+            "score": 0.95,
+            "metadata": {
+                "title": "Startup Ideas",
+                "text": "Build something people want.",
+            },
+        }
+    ]
+
+    fake_index.query.assert_called_once_with(
+        vector=[0.1, 0.2, 0.3],
+        top_k=5,
+        include_metadata=True,
+        namespace="test-namespace",
+    )

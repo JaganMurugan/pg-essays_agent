@@ -1,7 +1,7 @@
 [project]
 name = "pg-essays-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "Modular CLI-based RAG application for Paul Graham's essays"
 readme = "README.md"
 authors = [
     { name = "JaganMurugan", email = "jaganmurugan.m@gmail.com" }
@@ -9,12 +9,14 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "datasets>=5.2.0",
+    "google-genai>=3.3.0",
     "openai>=3.50.0",
     "pinecone>=10.3.0",
     "python-dotenv>=1.2.4",
     "sentence-transformers>=6.3.0",
     "tiktoken>=0.14.0",
 ]
+license = { text = "MIT" }
 
 [project.scripts]
 pg-essays-agent = "pg_essays_agent:main"

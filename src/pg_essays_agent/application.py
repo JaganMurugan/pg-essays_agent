@@ -11,6 +11,15 @@ from pg_essays_agent.vectorstores.factory import create_vector_store
 
 from pg_essays_agent.retrieval.pipeline import RetrievalPipeline
 
+from pg_essays_agent.generation.factory import (
+    create_generation_provider as build_generation_provider,
+)
+
+from pg_essays_agent.generation.factory import (
+    create_generation_provider as build_generation_provider,
+)
+from pg_essays_agent.pipeline.rag import RAGPipeline
+
 def configure_logging(settings: Settings) -> None:
     logging.basicConfig(
         level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -59,4 +68,34 @@ def create_retrieval_pipeline(
     return RetrievalPipeline(
         embedder=embedder,
         vector_store=vector_store,
+    )
+
+def create_generation_provider(
+    settings: Settings | None = None,
+):
+    """Construct the configured answer generation provider."""
+
+    if settings is None:
+        settings = load_settings()
+
+    configure_logging(settings)
+
+    return build_generation_provider(settings)
+
+def create_rag_pipeline(
+    settings: Settings | None = None,
+) -> RAGPipeline:
+    """Construct the complete RAG application pipeline."""
+
+    if settings is None:
+        settings = load_settings()
+
+    configure_logging(settings)
+
+    retriever = create_retrieval_pipeline(settings)
+    generator = build_generation_provider(settings)
+
+    return RAGPipeline(
+        retriever=retriever,
+        generator=generator,
     )

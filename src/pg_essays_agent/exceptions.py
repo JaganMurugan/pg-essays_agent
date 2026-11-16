@@ -21,3 +21,5 @@ class VectorStoreError(PGEssaysAgentError):
 class CheckpointError(PGEssaysAgentError):
     """Raised when checkpoint persistence or recovery fails."""
 
+class GenerationError(PGEssaysAgentError):
+    """Raised when LLM answer generation fails."""
