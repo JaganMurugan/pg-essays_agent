@@ -2,14 +2,14 @@ class PGEssaysAgentError(Exception):
     """Base exception for the PG Essays Agent application"""
 
 class ConfigurationError(PGEssaysAgentError):
-    """Raied when application configuration is invalid"""
+    """Raised when application configuration is invalid"""
 
 class DataLoadingError(PGEssaysAgentError):
     """Raised when source data cannot be loaded"""
 
 
 class ChunkingError(PGEssaysAgentError):
-    """Raised when text chunkig fails"""
+    """Raised when text chunking fails"""
 
 
 class EmbeddingError(PGEssaysAgentError):
