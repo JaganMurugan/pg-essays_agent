@@ -317,7 +317,7 @@ The project is being developed incrementally, with future improvements planned a
 
 ## License
 
-Add your chosen project license before publishing the repository.
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgements
 
